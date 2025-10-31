@@ -30,25 +30,6 @@ class CredentialManager:
         self.password = None
         self.email = None
         
-    def generate_random_username(self) -> str:
-        """Generate a random username"""
-        prefix = random.choice(['brainrot', 'viral', 'content', 'daily', 'trending'])
-        suffix = ''.join(random.choices(string.ascii_lowercase + string.digits, k=6))
-        return f"{prefix}_{suffix}"
-        
-    def generate_random_email(self) -> str:
-        """Generate a random email address"""
-        # Using temporary email services or create pattern
-        username = ''.join(random.choices(string.ascii_lowercase + string.digits, k=10))
-        domain = random.choice(['tempmail.com', 'guerrillamail.com', '10minutemail.com'])
-        return f"{username}@{domain}"
-        
-    def generate_random_password(self) -> str:
-        """Generate a secure random password"""
-        chars = string.ascii_letters + string.digits + "!@#$%^&*"
-        password = ''.join(random.choices(chars, k=16))
-        return password
-        
     def load_credentials(self) -> bool:
         """
         Load existing credentials from file
@@ -90,34 +71,52 @@ class CredentialManager:
         except Exception as e:
             logger.error(f"Failed to save credentials: {e}")
             
-    def create_credentials(self) -> Tuple[str, str, str]:
+    def prompt_for_credentials(self) -> Tuple[str, str, str]:
         """
-        Create new Instagram credentials
+        Prompt user to enter credentials manually
         
         Returns:
             Tuple of (username, password, email)
         """
-        self.username = self.generate_random_username()
-        self.password = self.generate_random_password()
-        self.email = self.generate_random_email()
+        print("\n" + "="*60)
+        print("Instagram Credentials Required")
+        print("="*60)
+        print("\nNo credentials found. Please provide your Instagram account details.")
+        print("NOTE: You must create an Instagram account manually first.")
+        print("See INSTAGRAM_SETUP.md for instructions.\n")
         
-        logger.info(f"Generated new credentials:")
-        logger.info(f"  Username: {self.username}")
-        logger.info(f"  Email: {self.email}")
-        
-        self.save_credentials()
-        return self.username, self.password, self.email
+        try:
+            username = input("Instagram username: ").strip()
+            password = input("Instagram password: ").strip()
+            email = input("Email address: ").strip()
+            
+            if not username or not password:
+                raise ValueError("Username and password are required")
+                
+            self.username = username
+            self.password = password
+            self.email = email
+            
+            self.save_credentials()
+            return username, password, email
+            
+        except (KeyboardInterrupt, EOFError):
+            logger.error("\nCredential entry cancelled by user")
+            raise
+        except Exception as e:
+            logger.error(f"Failed to get credentials: {e}")
+            raise
         
     def get_credentials(self) -> Tuple[Optional[str], Optional[str]]:
         """
-        Get credentials, creating new ones if needed
+        Get credentials, prompting user if needed
         
         Returns:
             Tuple of (username, password)
         """
         if not self.load_credentials():
-            logger.info("Creating new credentials...")
-            self.create_credentials()
+            logger.info("Credentials not found. Manual entry required.")
+            self.prompt_for_credentials()
             
         return self.username, self.password
         

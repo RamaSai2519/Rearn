@@ -5,6 +5,7 @@ Autonomous bot that finds, downloads, and reposts trending brainrot content
 import logging
 import time
 import sys
+import os
 from typing import List, Dict
 from instagrapi import Client
 from instagrapi.exceptions import LoginRequired, PleaseWaitFewMinutes
@@ -31,14 +32,22 @@ logger = logging.getLogger(__name__)
 class InstagramBrainrotBot:
     """Main bot orchestrator for autonomous Instagram content reposting"""
     
-    # MongoDB connection string
-    MONGODB_URI = "mongodb+srv://rama:7MR9oLpef122UCdy@cluster0.fquqway.mongodb.net/?retryWrites=true&w=majority&appName=Cluster"
+    # MongoDB connection string - can be overridden via environment variable
+    MONGODB_URI = os.getenv(
+        'MONGODB_URI',
+        "mongodb+srv://rama:7MR9oLpef122UCdy@cluster0.fquqway.mongodb.net/?retryWrites=true&w=majority&appName=Cluster"
+    )
     
     # Minimum posts per run
     MIN_POSTS_PER_RUN = 5
     
-    def __init__(self):
-        """Initialize the Instagram bot"""
+    def __init__(self, dry_run: bool = False):
+        """
+        Initialize the Instagram bot
+        
+        Args:
+            dry_run: If True, simulates posting without actually uploading to Instagram
+        """
         self.client = Client()
         self.db_handler = MongoDBHandler(self.MONGODB_URI)
         self.credential_manager = CredentialManager()
@@ -46,6 +55,10 @@ class InstagramBrainrotBot:
         self.downloader = None
         self.poster = None
         self.is_logged_in = False
+        self.dry_run = dry_run
+        
+        if dry_run:
+            logger.info("DRY RUN MODE: No actual posts will be made to Instagram")
         
     def setup(self) -> bool:
         """
@@ -56,15 +69,29 @@ class InstagramBrainrotBot:
         """
         logger.info("=" * 60)
         logger.info("Instagram Brainrot Bot Starting Up")
+        if self.dry_run:
+            logger.info("MODE: DRY RUN (No actual posting)")
         logger.info("=" * 60)
         
-        # Connect to MongoDB
+        # Connect to MongoDB (optional in dry-run mode)
         logger.info("Connecting to MongoDB...")
         if not self.db_handler.connect():
-            logger.error("Failed to connect to MongoDB")
-            return False
-            
-        logger.info(f"Posted content count: {self.db_handler.get_posted_count()}")
+            if self.dry_run:
+                logger.warning("MongoDB connection failed, continuing in dry-run mode without duplicate checking")
+            else:
+                logger.error("Failed to connect to MongoDB")
+                return False
+        else:
+            logger.info(f"Posted content count: {self.db_handler.get_posted_count()}")
+        
+        # Skip Instagram login in dry run mode
+        if self.dry_run:
+            logger.info("Skipping Instagram login (dry run mode)")
+            self.content_discovery = ContentDiscovery(self.client)
+            self.downloader = ContentDownloader(self.client)
+            self.poster = ContentPoster(self.client)
+            logger.info("Bot setup completed successfully (dry run mode)!")
+            return True
         
         # Setup Instagram credentials
         logger.info("Setting up Instagram credentials...")
@@ -142,6 +169,27 @@ class InstagramBrainrotBot:
         """
         logger.info(f"Searching for {count} trending content items...")
         
+        # In dry run mode, create mock content
+        if self.dry_run:
+            logger.info("[DRY RUN] Generating mock content...")
+            mock_content = []
+            for i in range(min(count, 10)):
+                mock_content.append({
+                    'id': f'mock_{i}',
+                    'pk': 1000000 + i,
+                    'code': f'ABC{i}XYZ',
+                    'video_url': f'https://example.com/video{i}.mp4',
+                    'thumbnail_url': f'https://example.com/thumb{i}.jpg',
+                    'caption': f'Mock brainrot content #{i}',
+                    'like_count': 1000 * (i + 1),
+                    'view_count': 10000 * (i + 1),
+                    'comment_count': 50 * (i + 1),
+                    'hashtag': 'brainrot',
+                    'url': f'https://www.instagram.com/p/MOCK{i}/'
+                })
+            logger.info(f"[DRY RUN] Generated {len(mock_content)} mock content items")
+            return mock_content
+        
         # Get trending content
         all_content = self.content_discovery.get_trending_content(num_posts=count)
         
@@ -174,6 +222,16 @@ class InstagramBrainrotBot:
             logger.info(f"Processing content: {content_id}")
             logger.info(f"  Source: {content_url}")
             logger.info(f"  Views: {content.get('view_count', 0)}, Likes: {content.get('like_count', 0)}")
+            
+            # In dry run mode, simulate the process
+            if self.dry_run:
+                logger.info("[DRY RUN] Would download content...")
+                time.sleep(1)
+                logger.info("[DRY RUN] Would post content to Instagram...")
+                time.sleep(1)
+                logger.info("[DRY RUN] Would mark as posted in database...")
+                logger.info(f"✓ [DRY RUN] Successfully simulated posting content {content_id}")
+                return True
             
             # Download the content
             logger.info("Downloading content...")
@@ -243,7 +301,7 @@ class InstagramBrainrotBot:
                 
                 # Wait between posts to avoid rate limiting
                 if posted_count < self.MIN_POSTS_PER_RUN:
-                    wait_time = 30
+                    wait_time = 30 if not self.dry_run else 2
                     logger.info(f"Waiting {wait_time} seconds before next post...")
                     time.sleep(wait_time)
             else:
@@ -294,7 +352,14 @@ class InstagramBrainrotBot:
 
 def main():
     """Entry point for the bot"""
-    bot = InstagramBrainrotBot()
+    import argparse
+    
+    parser = argparse.ArgumentParser(description='Instagram Brainrot Bot')
+    parser.add_argument('--dry-run', action='store_true',
+                       help='Run in dry-run mode without actually posting to Instagram')
+    args = parser.parse_args()
+    
+    bot = InstagramBrainrotBot(dry_run=args.dry_run)
     bot.execute()
 
 

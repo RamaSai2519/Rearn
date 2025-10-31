@@ -84,7 +84,14 @@ The bot will:
 ## Configuration
 
 ### MongoDB Connection
-The bot uses the following MongoDB connection string (embedded in code):
+The bot uses MongoDB for tracking posted content. By default, it uses the connection string embedded in the code, but you can override it with an environment variable:
+
+```bash
+export MONGODB_URI="your-mongodb-connection-string"
+python bot.py
+```
+
+Default connection string (if MONGODB_URI not set):
 ```
 mongodb+srv://rama:7MR9oLpef122UCdy@cluster0.fquqway.mongodb.net/?retryWrites=true&w=majority&appName=Cluster
 ```
@@ -93,11 +100,13 @@ mongodb+srv://rama:7MR9oLpef122UCdy@cluster0.fquqway.mongodb.net/?retryWrites=tr
 The bot searches for content using these hashtags:
 - #brainrot
 - #skibiditoilet
-- #gyatt, #rizz, #sigma
-- #ohio, #griddy, #fanum
-- #mewing, #mogger, #looksmaxxing
-- #ishowspeed, #kaicentat
-- And more trending terms
+- #sigma
+- #ohio, #griddy
+- #mewing
+- #fyp, #foryou, #viral, #trending
+- #comedy, #memes, #funny
+
+**Note**: All content is filtered to ensure compliance with Instagram's community guidelines.
 
 ## Project Structure
 
@@ -157,3 +166,13 @@ The bot includes built-in delays:
 ## License
 
 This project is for educational purposes only. Ensure you comply with Instagram's Terms of Service when using this bot.
+
+## Important Notes
+
+1. **Instagram Credentials**: The bot can auto-generate credentials, but for production use, you should use legitimate email addresses that can receive verification emails.
+
+2. **Content Compliance**: All posted content should comply with Instagram's Community Guidelines. The bot filters hashtags to avoid inappropriate content.
+
+3. **Rate Limiting**: The bot includes delays between actions to respect Instagram's rate limits. Excessive use may result in temporary account restrictions.
+
+4. **Security**: Store sensitive credentials using environment variables rather than hardcoding them. Use the MONGODB_URI environment variable for database connections.

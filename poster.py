@@ -94,16 +94,20 @@ class ContentPoster:
             logger.info(f"Caption: {caption[:100]}...")
             
             # Upload as reel/clip
-            media = self.client.clip_upload(
-                video_path,
-                caption=caption
-            )
+            try:
+                media = self.client.clip_upload(
+                    video_path,
+                    caption=caption
+                )
+            except Exception as upload_error:
+                logger.error(f"Instagram API error during upload: {upload_error}")
+                return None
             
             if media and media.pk:
                 logger.info(f"Successfully posted! Media ID: {media.pk}")
                 return str(media.pk)
             else:
-                logger.error("Failed to post video - no media returned")
+                logger.error("Failed to post video - no media returned from Instagram API")
                 return None
                 
         except Exception as e:

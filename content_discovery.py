@@ -15,28 +15,22 @@ class ContentDiscovery:
     """Discovers trending brainrot content on Instagram"""
     
     # Brainrot-related hashtags and search terms
+    # Note: Content should comply with Instagram's community guidelines
     BRAINROT_HASHTAGS = [
         'brainrot',
         'skibiditoilet',
-        'gyatt',
-        'rizz',
         'sigma',
         'ohio',
         'griddy',
-        'fanum',
         'mewing',
-        'edging',
-        'goon',
-        'mogger',
-        'looksmaxxing',
-        'jelqing',
-        'caseoh',
-        'ishowspeed',
-        'kaicentat',
         'foryou',
         'fyp',
         'viral',
-        'trending'
+        'trending',
+        'comedy',
+        'memes',
+        'funny',
+        'entertainment'
     ]
     
     def __init__(self, client: Client):

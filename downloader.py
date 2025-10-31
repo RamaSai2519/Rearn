@@ -79,7 +79,7 @@ class ContentDownloader:
             filepath = self.download_dir / filename
             
             logger.info(f"Downloading from URL: {url}")
-            response = requests.get(url, stream=True, timeout=30)
+            response = requests.get(url, stream=True, timeout=30, verify=True)
             response.raise_for_status()
             
             with open(filepath, 'wb') as f:
