@@ -131,8 +131,9 @@ class CredentialManager:
             True if credentials are valid, False otherwise
         """
         try:
-            # Try to login
+            # Try to login - password is passed securely to the API
             username, password = self.get_credentials()
+            # Note: Password is not logged anywhere for security
             client.login(username, password)
             logger.info(f"Successfully logged in as {username}")
             return True

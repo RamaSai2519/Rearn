@@ -121,7 +121,7 @@ class InstagramBrainrotBot:
         
         Args:
             username: Instagram username
-            password: Instagram password
+            password: Instagram password (not logged for security)
             
         Returns:
             True if login successful, False otherwise
@@ -131,6 +131,7 @@ class InstagramBrainrotBot:
             session_file = self.credential_manager.SESSION_FILE
             try:
                 self.client.load_settings(session_file)
+                # Password is passed securely to API, never logged
                 self.client.login(username, password)
                 logger.info("Logged in using existing session")
                 self.is_logged_in = True
@@ -138,7 +139,7 @@ class InstagramBrainrotBot:
             except:
                 pass
                 
-            # Fresh login
+            # Fresh login - password passed securely to API
             self.client.login(username, password)
             
             # Save session
